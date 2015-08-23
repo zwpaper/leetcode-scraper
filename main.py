@@ -8,7 +8,6 @@ import time
 import datetime
 import os
 
-
 LOGIN_ADDRESS = 'https://leetcode.com/accounts/login/'
 HOME_ADDRESS = 'https://leetcode.com/problemset/algorithms/'
 LEETCODE_ADDRESS = 'https://leetcode.com'
@@ -22,11 +21,13 @@ def login():
     login_csrf = login_soup.select('form.form-signin > input')[0]['value']
     login_headers = {'Origin': 'https://leetcode.com',
                      'Referer': 'https://leetcode.com/accounts/login/',
-                     'User-Agent': '''Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36
-                                      (KHTML, like Gecko) Chrome/43.0.2357.130 Safari/537.36'''
+                     'User-Agent': '''Mozilla/5.0 (Macintosh; Intel Mac OS X 10_
+                     10_3) AppleWebKit/537.36
+                     (KHTML, like Gecko) Chrome/43.0.2357.130 Safari/537.36'''
                      }
     session.headers.update(login_headers)
-    data = {'login': 'zw.paper@gmail.com', 'password': 'qwer1234', 'csrfmiddlewaretoken': login_csrf}
+    data = {'login': 'zw.paper@gmail.com', 'password': 'qwer1234',
+            'csrfmiddlewaretoken': login_csrf}
     req = session.post(LOGIN_ADDRESS, data)
     if req.status_code == 200:
         logging.debug('login successfully')
@@ -59,12 +60,14 @@ def get_problem_page(session, problem_link):
         logging.debug('Problem page get.')
         problem_soup = bs4.BeautifulSoup(response.content)
         problem = {}
-        problem['title'] = re.match('([\w\s]*)|', problem_soup.title.text).groups()[0].strip()
-        problem['description'] = problem_soup.find_all(attrs={'name':'description'})[0]['content']
+        problem['title'] = re.match(
+            '([\w\s]*)|', problem_soup.title.text).groups()[0].strip()
+        problem['description'] = problem_soup.find_all(
+            attrs={'name': 'description'})[0]['content']
         return problem
 
 
-if __name__ == '__main__':
+def testing():
     se, res = login()
     list_problems, pre = get_front_page(res)
 
@@ -74,7 +77,7 @@ if __name__ == '__main__':
     for i in range(1):
         time_start = time.time()
         for pro_item in list_problems:
-            pro = get_problem_page(se, LEETCODE_ADDRESS + pro_item['href'] )
+            pro = get_problem_page(se, LEETCODE_ADDRESS + pro_item['href'])
             f.write(pro_item['href'] + '\t' + pro['title'] + '\n')
         time_end = time.time()
         f.write(str(time_end - time_start) + '\n\n')
