@@ -8,6 +8,9 @@ import time
 import datetime
 import os
 
+from db import db
+
+
 LOGIN_ADDRESS = 'https://leetcode.com/accounts/login/'
 HOME_ADDRESS = 'https://leetcode.com/problemset/algorithms/'
 LEETCODE_ADDRESS = 'https://leetcode.com'
@@ -58,7 +61,7 @@ def get_problem_page(session, problem_link):
     response = session.get(problem_link)
     if response.status_code == 200:
         logging.debug('Problem page get.')
-        problem_soup = bs4.BeautifulSoup(response.content)
+        problem_soup = bs4.BeautifulSoup(response.content, 'html.parser')
         problem = {}
         problem['title'] = re.match(
             '([\w\s]*)|', problem_soup.title.text).groups()[0].strip()
@@ -68,22 +71,29 @@ def get_problem_page(session, problem_link):
 
 
 def testing():
+    problem_db = db("leetcode.db")
+    problem_db.create_table("problems")
     se, res = login()
     list_problems, pre = get_front_page(res)
 
     os.remove(os.path.expanduser('~') + '/temp/time_check')
     f = open(os.path.expanduser('~') + '/temp/time_check', 'a')
     f.write(str(datetime.datetime.now()) + '\n')
+    problem_pages = []
     for i in range(1):
         time_start = time.time()
-        for pro_item in list_problems:
-            pro = get_problem_page(se, LEETCODE_ADDRESS + pro_item['href'])
-            f.write(pro_item['href'] + '\t' + pro['title'] + '\n')
+        for prob_item in list_problems:
+            prob_page = get_problem_page(se,
+                                         LEETCODE_ADDRESS + prob_item['href'])
+            problem_pages.append(prob_page)
+            f.write(prob_item['href'] + '\t' + prob_page['title'] + '\n')
+        problem_db.insert_problems(list_problems, problem_pages)
         time_end = time.time()
         f.write(str(time_end - time_start) + '\n\n')
 
     f.write('premium problems:\n')
     for pre_item in pre:
         f.write(pre_item['name'] + pre_item['href'] + '\n')
-
+    problem_db.insert_problems(pre)
+    del problem_db
     f.close()
