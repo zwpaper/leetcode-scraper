@@ -66,8 +66,20 @@ def get_problem_page(session, problem_link):
         problem['title'] = re.match(
             '([\w\s]*)|', problem_soup.title.text).groups()[0].strip()
         problem['description'] = problem_soup.find_all(
-            attrs={'name': 'description'})[0]['content']
+            attrs={'name': 'description'})[0]['content'].strip()
         return problem
+
+
+def get_all_problems(session, problems):
+    prob_pages = []
+    for prob_item in problems:
+        prob_page = get_problem_page(session,
+                                     LEETCODE_ADDRESS + prob_item['href'])
+        if prob_page['description']:
+            prob_pages.append(prob_page)
+        else:
+            logging.debug('Description not found: ' + prob_item['name'])
+    return prob_pages
 
 
 def testing():
@@ -79,14 +91,9 @@ def testing():
     os.remove(os.path.expanduser('~') + '/temp/time_check')
     f = open(os.path.expanduser('~') + '/temp/time_check', 'a')
     f.write(str(datetime.datetime.now()) + '\n')
-    problem_pages = []
     for i in range(1):
         time_start = time.time()
-        for prob_item in list_problems:
-            prob_page = get_problem_page(se,
-                                         LEETCODE_ADDRESS + prob_item['href'])
-            problem_pages.append(prob_page)
-            f.write(prob_item['href'] + '\t' + prob_page['title'] + '\n')
+        problem_pages = get_all_problems(se, list_problems)
         problem_db.insert_problems(list_problems, problem_pages)
         time_end = time.time()
         f.write(str(time_end - time_start) + '\n\n')

@@ -37,8 +37,9 @@ class db:
                              prob['tag'], 0))
 
         self.cursor.executemany('''
-        INSERT INTO ''' + self.table_name + ' ' + '''
-        VALUES(?, ?, ?, ?, ?, ?)''', data)
+        INSERT or REPLACE INTO ''' + self.table_name + ' ' + '''
+        VALUES ((select id from ''' + self.table_name + ''' where id = ?),
+        (?, ?, ?, ?, ?, ?))''', (data[0], data))
         self.conn.commit()
         logging.debug('table inserted!')
 
